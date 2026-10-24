@@ -1,0 +1,25 @@
+  bool push(Batch &&batch, uint32_t timeoutMs) {
+    LONGLONG deadline = nowUs() + static_cast<LONGLONG>(timeoutMs) * 1000;
+    EnterCriticalSection(&cs_);
+    while (items_.size() >= capacity_) {
+      if (g_stop) {
+        LeaveCriticalSection(&cs_);
+        return false;
+      }
+      LONGLONG left = deadline - nowUs();
+      if (left <= 0) {
+        LeaveCriticalSection(&cs_);
+        return false;
+      }
+      DWORD wait = static_cast<DWORD>(std::min<LONGLONG>(20, (left + 999) / 1000));
+      SleepConditionVariableCS(&notFull_, &cs_, wait);
+    }
+    batch.readyAtUs = nowUs();
+    batch.processed = 0;
+    items_.push_back(std::move(batch));
+    if (items_.size() > capacity_)
+      InterlockedIncrement(&inv_->queueOverflow);
+    WakeConditionVariable(&notEmpty_);
+    LeaveCriticalSection(&cs_);
+    return true;
+  }

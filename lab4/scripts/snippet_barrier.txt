@@ -1,0 +1,26 @@
+    LONG slot = InterlockedIncrement(&st.claimCounter) - 1;
+    if (slot >= 0 && static_cast<size_t>(slot) < b->items.size()) {
+      uint32_t idx = b->items[static_cast<size_t>(slot)];
+      InterlockedExchangeAdd64(&ctx.requests[idx].waitUs, nowUs() - b->readyAtUs);
+      processRequest(ctx, st, idx, role);
+      InterlockedIncrement(&b->processed);
+    }
+
+    LONGLONG t0 = nowUs();
+    EnterSynchronizationBarrier(&st.barrier, 0);
+    InterlockedExchangeAdd64(&st.barrierWaitUs, nowUs() - t0);
+
+    if (InterlockedIncrement(&st.departCounter) == static_cast<LONG>(ctx.cfg.workers)) {
+      if (b->processed != static_cast<LONG>(b->items.size()))
+        InterlockedIncrement(&ctx.inv.batchIncomplete);
+      if (qout.push(std::move(*b), ctx.cfg.pushTimeoutMs)) {
+        InterlockedIncrement(&st.batchesForwarded);
+      } else {
+        rejectBatch(ctx, *b, role, "PUSH_TIMEOUT");
+      }
+      EnterCriticalSection(&st.cs);
+      st.current = nullptr;
+      WakeAllConditionVariable(&st.cvBatch);
+      LeaveCriticalSection(&st.cs);
+      delete b;
+    }
