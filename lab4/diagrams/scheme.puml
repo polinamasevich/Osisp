@@ -1,4 +1,5 @@
 @startuml
+!pragma layout smetana
 title Лабораторная работа 4, вариант 19 — архитектура системы массового обслуживания
 
 left to right direction

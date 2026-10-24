@@ -5,3 +5,6 @@
 Lab1/
 Lab2/
 lab3/
+tools/
+**/diagrams/*.png
+~$*
