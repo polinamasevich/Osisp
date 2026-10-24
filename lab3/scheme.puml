@@ -1,0 +1,25 @@
+@startuml
+ title Схема взаимодействия процессов
+ left to right direction
+ skinparam shadowing false
+ skinparam componentStyle rectangle
+ skinparam defaultFontName Arial
+ skinparam ArrowColor #444444
+ skinparam packageStyle rectangle
+
+ rectangle "Supervisor\nсоздает IPC-объекты\nи запускает процессы" as Supervisor
+ rectangle "Producer\nзаписывает сообщения" as Producer
+ rectangle "Разделяемая память\nПул из 8 буферов\nFREE → WRITING → READY → READING → FREE" as Pool
+ rectangle "Consumer\nчитает и обрабатывает\nсообщения" as Consumer
+ rectangle "Синхронизация\nMutex\nСемафоры FREE и READY\nСобытие DONE" as Sync
+
+ Supervisor --> Pool : CreateFileMappingW
+ Supervisor --> Sync : CreateMutexW,\nCreateSemaphoreW, CreateEventW
+ Supervisor --> Producer : CreateProcessW
+ Supervisor --> Consumer : CreateProcessW
+ Producer --> Pool : запись данных
+ Pool --> Consumer : чтение данных
+ Producer ..> Sync : ожидание FREE,\nсигнал READY
+ Consumer ..> Sync : ожидание READY,\nсигнал FREE
+ Producer ..> Sync : сигнал DONE
+@enduml
