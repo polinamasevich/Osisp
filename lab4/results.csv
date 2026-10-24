@@ -1,3 +1,0 @@
-mode,requests,stages,workers,batch_size,capacity,seed,proc_max_ms,wall_ms,completed,rejected,mean_wait_ms,mean_proc_ms,barrier_wait_total_ms,violations
-batch,865,3,4,4,16,8081,5,1070.6,865,0,93.77,9.26,3885.7,0
-single,865,3,4,4,16,8081,5,724.9,865,0,28.16,9.32,0.0,0
