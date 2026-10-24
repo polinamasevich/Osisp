@@ -205,7 +205,7 @@ para("Программа lab4.exe — консольное многопоточ�
      "партию за раунд, распределяя элементы между потоками и синхронизируя конец раунда "
      "барьером.")
 image(os.path.join(IMG, "scheme.png"), 16.5,
-      "Рисунок 1 — Архитектура программы (сгенерирован scripts/draw_scheme.py)")
+      "Рисунок 1 — Схема взаимодействия потоков и очередей (сгенерирован scripts/draw_scheme.py)")
 para("Основные компоненты: класс BoundedQueue (ограниченная потокобезопасная FIFO-очередь "
      "партий); структура StageState (состояние ступени: текущая партия, номер раунда, счётчики, "
      "барьер, статистика); потоки generatorProc, stageWorkerProc (4 на ступень), "
@@ -477,7 +477,7 @@ for line in ["lab4/", "├── main.cpp            — исходный код
              "├── barrier_test.cpp      — тест семантики EnterSynchronizationBarrier",
              "├── scripts/", "│   ├── run_experiments.py — проведение экспериментов",
              "│   ├── plot_results.py    — построение графиков",
-             "│   ├── draw_scheme.py     — схема архитектуры",
+             "│   ├── draw_scheme.py     — схема взаимодействия",
              "│   └── make_report.py     — генерация настоящего отчёта",
              "├── diagrams/             — scheme.puml, sequence.puml",
              "├── data/                 — experiments.csv, stages.csv",
