@@ -1,0 +1,39 @@
+@startuml
+title Обработка одной партии на ступени (режим batch, вариант 19)
+
+participant "Очередь Qk" as Q
+participant "W0 (fetcher)" as W0
+participant "W1" as W1
+participant "W2" as W2
+participant "W3" as W3
+participant "Очередь Qk+1" as QN
+
+W0 -> W0 : ждёт current == nullptr\n(предыдущий раунд завершён)
+W0 -> Q : pop()
+Q --> W0 : партия из 4 заявок
+W0 -> W0 : current = batch; round++;\nclaim = 0; depart = 0;\nprocessed = 0
+W0 -> W1 : WakeAllConditionVariable(cvBatch)
+W0 -> W2 : WakeAllConditionVariable(cvBatch)
+W0 -> W3 : WakeAllConditionVariable(cvBatch)
+
+W0 -> W0 : slot = InterlockedIncrement(claim)-1 = 0\nобработка REQ a
+W1 -> W1 : slot = 1, обработка REQ b
+W2 -> W2 : slot = 2, обработка REQ c
+W3 -> W3 : slot = 3, обработка REQ d
+
+W0 -> W0 : EnterSynchronizationBarrier
+W1 -> W1 : EnterSynchronizationBarrier
+W2 -> W2 : EnterSynchronizationBarrier
+W3 -> W3 : EnterSynchronizationBarrier
+
+note over W0, W3
+  Барьер освобождает все 4 потока только когда
+  каждый из них вошёл в него (конец раунда).
+  TRUE получает только последний прибывший поток.
+end note
+
+W3 -> W3 : depart == 4 (последний):\nинвариант processed == items
+W3 -> QN : push(партия целиком)
+W3 -> W3 : current = nullptr;\nWakeAllConditionVariable(cvBatch)
+W0 -> Q : pop() следующей партии
+@enduml

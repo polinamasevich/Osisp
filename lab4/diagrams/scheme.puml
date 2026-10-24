@@ -1,0 +1,49 @@
+@startuml
+title Лабораторная работа 4, вариант 19 — архитектура системы массового обслуживания
+
+left to right direction
+skinparam componentStyle rectangle
+
+component "Generator\n(1 поток)\nSEED=8081" as GEN #fde9d9
+queue "Q0\ncap=16" as Q0
+package "Stage 1 (4 потока)" as S1 #eef5ee {
+  component "W0 (fetcher)" as S1W0
+  component "W1" as S1W1
+  component "W2" as S1W2
+  component "W3" as S1W3
+  component "Barrier 1" as B1 #ffd9d9
+}
+queue "Q1\ncap=16" as Q1
+package "Stage 2 (4 потока)" as S2 #eef5ee {
+  component "W0 (fetcher)" as S2W0
+  component "Barrier 2" as B2 #ffd9d9
+}
+queue "Q2\ncap=16" as Q2
+package "Stage 3 (4 потока)" as S3 #eef5ee {
+  component "W0 (fetcher)" as S3W0
+  component "Barrier 3" as B3 #ffd9d9
+}
+queue "Q3\ncap=16" as Q3
+component "Collector\n(1 поток)" as COL #f3e1f7
+
+GEN --> Q0 : партии по 4 заявки\n(batch) / по 1 (single)
+Q0 --> S1W0 : pop
+S1W0 --> B1
+S1W1 --> B1
+S1W2 --> B1
+S1W3 --> B1
+B1 --> Q1 : партия после\nвсех 4 потоков
+Q1 --> S2W0 : pop
+S2W0 --> B2
+B2 --> Q2
+Q2 --> S3W0 : pop
+S3W0 --> B3
+B3 --> Q3
+Q3 --> COL : проверка инвариантов,\nучёт completed
+
+note bottom of B1
+  Каждая ступень: CRITICAL_SECTION + CONDITION_VARIABLE (cvBatch),
+  SYNCHRONIZATION_BARRIER на 4 участника.
+  Заявки: разделяемый массив Request, счётчики Interlocked*.
+end note
+@enduml
